@@ -38,4 +38,5 @@ return {
    "whisper_chat",
    "whisper_control",
    "wisdom_info",
+   "hoodwink_combo",
 }

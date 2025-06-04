@@ -11,6 +11,20 @@ ui.hotkey = group:Bind("Combo Key", Enum.ButtonCode.KEY_NONE)
 local castState = 0
 local nextTime = 0
 local target = nil
+local W_SPEED = 1500 -- approximate projectile speed of Bushwhack
+local Q_SPEED = 2500 -- approximate projectile speed of Acorn Shot
+
+local function PredictPosition(t, speed)
+    if not t then return nil end
+    local origin = Entity.GetAbsOrigin(t)
+    local dir = Entity.GetAbsRotation(t):GetForward():Normalized()
+    local ms = NPC.GetMoveSpeed(t)
+    local hero = GetMyHero()
+    if not hero then return origin end
+    local distance = (origin - Entity.GetAbsOrigin(hero)):Length2D()
+    local travel = distance / speed
+    return origin + dir * ms * travel
+end
 
 local function GetMyHero()
     return Heroes.GetLocal()
@@ -51,7 +65,8 @@ function hoodwink.OnUpdate()
         if ui.hotkey:IsDown() then
             target = FindTarget(1000)
             if target and Ability.IsCastable(w, NPC.GetMana(hero)) then
-                Ability.CastPosition(w, Entity.GetAbsOrigin(target))
+                local pos = PredictPosition(target, W_SPEED)
+                Ability.CastPosition(w, pos)
                 castState = 1
                 nextTime = now + 0.1
             end
@@ -59,7 +74,8 @@ function hoodwink.OnUpdate()
     elseif castState == 1 then
         if now >= nextTime then
             if target and Ability.IsCastable(q, NPC.GetMana(hero)) then
-                Ability.CastTarget(q, target)
+                local pos = PredictPosition(target, Q_SPEED)
+                Ability.CastPosition(q, pos)
             end
             castState = 0
             target = nil
